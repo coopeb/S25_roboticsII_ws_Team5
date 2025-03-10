@@ -17,7 +17,7 @@ Press the `Fork` on the page and fork the repo to your account. This will create
 On your machine, open a new terminal (via VNC or SSH)
 ```
 cd ~/codes
-git clone https://github.com/YOUR_ACCOUNT/S25_roboticsII_ws_Team5.git Team5_ws
+git clone https://github.com/coopeb/S25_roboticsII_ws_Team5.git Team5_ws
 ```
 
 **Please see the instructions in the lab assignment document for full instructions on how to run this code and how to keep the files on the robot updated.** 
