@@ -1,9 +1,9 @@
 # S25_roboticsII
 ROS2 Workspace for S25 RoboticsII
-Brian Cooper
-Max Rueda
-Jayden Smith
-Molly Vitkevich
+#Brian Cooper
+#Max Rueda
+#Jayden Smith
+#Molly Vitkevich
 
 ## Fork the repository
 
