@@ -158,24 +158,31 @@ class TrackingNode(Node):
     
     def timer_update(self):
         ################### Write your code here ###################
-        
-        # Now, the robot stops if the object is not detected
-        # But, you may want to think about what to do in this case
-        # and update the command velocity accordingly
         if self.goal_pose is None:
+            cmd_vel = Twist()
+            cmd_vel.linear.x = 0.0
+            cmd_vel.angular.z = 0.3
+            self.pub_control_cmd.publish(cmd_vel)
+            return
+
+		# Get the current object pose and goal pose in the robot's frame
+        current_obs_pose, current_goal_pose = self.get_current_poses()
+
+		# Check distance to goal
+        goal_distance = math.sqrt(current_goal_pose[0]**2 + current_goal_pose[1]**2)
+
+		# Stop when within 0.3 meters of the goal
+        if goal_distance < 0.3:
             cmd_vel = Twist()
             cmd_vel.linear.x = 0.0
             cmd_vel.angular.z = 0.0
             self.pub_control_cmd.publish(cmd_vel)
             return
-        
-        # Get the current object pose in the robot base_footprint frame
-        current_obs_pose, current_goal_pose = self.get_current_poses()
-        
-        # TODO: get the control velocity command
+
+		# Get the control velocity command
         cmd_vel = self.controller()
-        
-        # publish the control command
+
+		# Publish the control command
         self.pub_control_cmd.publish(cmd_vel)
         #################################################
     
@@ -184,12 +191,38 @@ class TrackingNode(Node):
         # feel free to modify the code structure, add more parameters, more input variables for the function, etc.
         
         ########### Write your code here ###########
+
+        # Get the current object pose and goal pose in the robot's frame
+        current_obs_pose, current_goal_pose = self.get_current_poses()
+
+        goal_distance = math.sqrt(current_goal_pose[0]**2 + current_goal_pose[1]**2)
         
-        # TODO: Update the control velocity command
+        # Proportional control parameters
+        K_linear = 0.5
+        K_angular = 1.0
+        near_zero = 2
+
+		# Compute the angle to the goal
+        goal_angle = math.atan2(current_goal_pose[1], current_goal_pose[0])
+
+		# Calculate linear and angular velocities
         cmd_vel = Twist()
-        cmd_vel.linear.x = 0
-        cmd_vel.linear.y = 0
-        cmd_vel.angular.z = 0
+        cmd_vel.linear.x = K_linear * goal_distance
+        cmd_vel.angular.z = K_angular * goal_angle
+
+		# Obstacle avoidance: If obstacle is close, prioritize avoiding it
+        if self.obs_pose is not None:
+            obs_distance = math.sqrt(current_obs_pose[0]**2 + current_obs_pose[1]**2)
+            if obs_distance < 0.5:  # Obstacle within 0.5 meters
+				# Steer away from the obstacle
+                avoid_angle = math.atan2(current_obs_pose[1], current_obs_pose[0])
+                if avoid_angle<=0.1:
+                    avoid_angle = avoid_angle*near_zero
+                    cmd_vel.angular.z += K_angular * (-avoid_angle)
+
+		# Limit maximum speeds for safety
+        cmd_vel.linear.x = min(cmd_vel.linear.x, 0.5)
+        cmd_vel.angular.z = min(max(cmd_vel.angular.z, -1.0), 1.0)
         return cmd_vel
     
         ############################################
